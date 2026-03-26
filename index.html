@@ -33,8 +33,20 @@
 <div class="grid-container">
     <div class="panel">
         <h3>Enter Stats</h3>
+        <div class="field-group">
+            <div class="field">
+                Pokemon: 
+                <select id="stats_pokemon" style="width: 160px;">
+                    <option value="">Selecciona...</option>
+                </select>
+            </div>
+            <div class="field">
+                Nature: 
+                <select id="stats_nature" style="width: 160px;"></select>
+            </div>
+        </div>
         <textarea id="enter_stats" placeholder="Level HP Atk Def Spa Spd Spe"></textarea>
-        <button class="btn-calc" onclick="alert('Lógica de cálculo de IVs en desarrollo...')">Calculate IV Ranges (Send to Filters)</button>
+        <button class="btn-calc" onclick="calcularIVs()">Calculate IVs & Filter</button>
         <br><br>
 
         <h3>RNG Information</h3>
@@ -84,19 +96,61 @@
                         <th>Advances</th><th>PID</th><th>Nature</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
                     </tr>
                 </thead>
-                <tbody>
-                    </tbody>
+                <tbody></tbody>
             </table>
         </div>
     </div>
 </div>
 
+<script src="pokemonData.js"></script>
 <script>
     const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
     const nSel = document.getElementById('f_nature');
-    natures.forEach((n, i) => { nSel.add(new Option(n, i)); });
+    const sNSel = document.getElementById('stats_nature');
+    
+    natures.forEach((n, i) => { 
+        nSel.add(new Option(n, i)); 
+        sNSel.add(new Option(n, i));
+    });
+
+    const pSel = document.getElementById('stats_pokemon');
+    if(typeof pokemonDB !== 'undefined'){
+        Object.keys(pokemonDB).sort().forEach(name => { pSel.add(new Option(name, name)); });
+    }
 
     function lcg(s) { return (BigInt(s) * 1103515245n + 24691n) & 0xFFFFFFFFn; }
+
+    function calcularIVs() {
+        const pName = pSel.value;
+        const natureIdx = parseInt(sNSel.value);
+        const raw = document.getElementById('enter_stats').value.trim().split(/\s+/);
+        if (!pName || raw.length < 7) return alert("Selecciona Pokémon y entra: Level HP Atk Def Spa Spd Spe");
+
+        const [lvl, ...stats] = raw.map(Number);
+        const base = pokemonDB[pName];
+        const ids = ['hp', 'at', 'df', 'sa', 'sd', 'sp'];
+        
+        const mods = [1,1,1,1,1,1]; 
+        const up = Math.floor(natureIdx / 5), down = natureIdx % 5;
+        if(up !== down) { mods[up+1] += 0.1; mods[down+1] -= 0.1; }
+
+        ids.forEach((id, i) => {
+            let min = 0, max = 31, foundMin = -1, foundMax = -1;
+            for(let iv=0; iv<=31; iv++) {
+                let calc;
+                if(i===0) calc = Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10;
+                else calc = Math.floor((Math.floor(((base[i]*2 + iv)*lvl)/100) + 5) * mods[i]);
+                
+                if(calc === stats[i]) {
+                    if(foundMin === -1) foundMin = iv;
+                    foundMax = iv;
+                }
+            }
+            document.getElementById(id+'_min').value = foundMin === -1 ? 0 : foundMin;
+            document.getElementById(id+'_max').value = foundMax === -1 ? 31 : foundMax;
+        });
+        document.getElementById('f_nature').value = natureIdx;
+    }
 
     function buscar() {
         const tid = parseInt(document.getElementById('tid').value);
@@ -108,40 +162,34 @@
         const tBody = document.querySelector('#resultsTable tbody');
         tBody.innerHTML = "";
 
-        const minV = (id) => parseInt(document.getElementById(id).value);
+        const getV = (id) => parseInt(document.getElementById(id).value);
 
         seedsList.forEach(sHex => {
             let seed = BigInt("0x" + sHex.trim());
-            
             for (let adv = 0; adv <= (target + offset); adv++) {
                 if (adv >= (target - offset)) {
                     let s = seed;
-                    // PID
                     s = lcg(s); let pL = Number(s >> 16n);
                     s = lcg(s); let pH = Number(s >> 16n);
                     let pid = ((pH << 16) >>> 0) | pL;
-                    // IVs
                     s = lcg(s); let iv1 = Number(s >> 16n);
                     s = lcg(s); let iv2 = Number(s >> 16n);
                     let ivs = { h: iv1&31, a: (iv1>>5)&31, d: (iv1>>10)&31, s: iv2&31, sa: (iv2>>5)&31, sd: (iv2>>10)&31 };
-                    
                     let nIdx = pid % 25;
                     let isS = (tid ^ sid ^ pH ^ pL) < 8;
 
-                    // Aplicar Filtros
                     let passF = true;
                     if (document.getElementById('f_shiny').value === 'yes' && !isS) passF = false;
                     if (document.getElementById('f_nature').value !== 'any' && nIdx != document.getElementById('f_nature').value) passF = false;
-                    if (ivs.h < minV('hp_min') || ivs.h > minV('hp_max') || ivs.a < minV('at_min') || ivs.a > minV('at_max') ||
-                        ivs.d < minV('df_min') || ivs.d > minV('df_max') || ivs.sa < minV('sa_min') || ivs.sa > minV('sa_max') ||
-                        ivs.sd < minV('sd_min') || ivs.sd > minV('sd_max') || ivs.s < minV('sp_min') || ivs.s > minV('sp_max')) passF = false;
+                    if (ivs.h < getV('hp_min') || ivs.h > getV('hp_max') || ivs.a < getV('at_min') || ivs.a > getV('at_max') ||
+                        ivs.d < getV('df_min') || ivs.d > getV('df_max') || ivs.sa < getV('sa_min') || ivs.sa > getV('sa_max') ||
+                        ivs.sd < getV('sd_min') || ivs.sd > getV('sd_max') || ivs.s < getV('sp_min') || ivs.s > getV('sp_max')) passF = false;
 
                     if (passF) {
-                        let row = `<tr class="${isS ? 'shiny-row' : ''}">
+                        tBody.innerHTML += `<tr class="${isS ? 'shiny-row' : ''}">
                             <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${natures[nIdx]}</td>
                             <td>${ivs.h}</td><td>${ivs.a}</td><td>${ivs.d}</td><td>${ivs.sa}</td><td>${ivs.sd}</td><td>${ivs.s}</td><td>${isS ? '✨' : ''}</td>
                         </tr>`;
-                        tBody.innerHTML += row;
                     }
                 }
                 seed = lcg(seed);
