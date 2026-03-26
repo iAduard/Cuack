@@ -280,9 +280,9 @@
             tBody.innerHTML = results.length ? "" : "<tr><td colspan='11'>No se encontraron resultados.</td></tr>";
             results.forEach(r => {
                 tBody.innerHTML += `<tr class="${r.isS ? 'shiny-row' : ''}">
-                    <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td>
-                    <td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td><td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
-                </tr>`;
+    <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td><td>${r.ability}</td>
+    <td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td><td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
+</tr>`;
             });
             btn.disabled = false;
         };
