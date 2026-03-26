@@ -4,10 +4,22 @@
     <meta charset="UTF-8">
     <title>Cuack-RNG | Gen 3 Assistant</title>
     <style>
-        body { background: #1a202c; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 11px; margin: 20px; }
+        /* Estilos base del usuario */
+        body { background: #1a202c; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 11px; margin: 0; }
+        
+        /* Nav Pestañas Estilo Ten Lines */
+        .navbar { background: #2d3748; display: flex; border-bottom: 2px solid #4a5568; padding: 0 20px; }
+        .tab-button { background: none; border: none; color: #a0aec0; padding: 12px 20px; cursor: pointer; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 10px; }
+        .tab-button:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab-button.active { color: #63b3ed; border-bottom: 3px solid #63b3ed; }
+
+        .tab-content { display: none; padding: 20px; }
+        .tab-content.active { display: block; }
+
         .grid-container { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
         .panel { border: 1px solid #4a5568; padding: 15px; background: #2d3748; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h3 { margin: 0 0 10px 0; font-size: 11px; color: #cbd5e0; text-transform: uppercase; border-bottom: 1px solid #4a5568; padding-bottom: 5px; letter-spacing: 0.5px; }
+        
         .field-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         .field { display: flex; justify-content: space-between; align-items: center; }
         
@@ -31,81 +43,96 @@
 </head>
 <body>
 
-<div class="grid-container">
-    <div class="panel">
-        <h3>Version & Pokemon</h3>
-        <div class="field-group">
-            <div class="field">
-                Version: 
-                <select id="game_version" onchange="updateCategories()" style="width: 160px;">
-                    <option value="FRLG">Fire Red / Leaf Green</option>
-                    <option value="RSE">Emerald / Ruby / Sapphire</option>
-                </select>
+<div class="navbar">
+    <button class="tab-button active" onclick="openTab(event, 'searcherTab')">Searcher</button>
+    <button class="tab-button" onclick="openTab(event, 'hunterTab')">Hunter</button>
+</div>
+
+<div id="searcherTab" class="tab-content active">
+    <div class="grid-container">
+        <div class="panel">
+            <h3>Version & Pokemon</h3>
+            <div class="field-group">
+                <div class="field">
+                    Version: 
+                    <select id="game_version" onchange="updateCategories()" style="width: 160px;">
+                        <option value="FRLG">Fire Red / Leaf Green</option>
+                        <option value="RSE">Emerald / Ruby / Sapphire</option>
+                    </select>
+                </div>
+                <div class="field">
+                    Category: 
+                    <select id="pkmn_category" onchange="updatePokemonList()" style="width: 160px;"></select>
+                </div>
+                <div class="field">
+                    Pokemon: 
+                    <select id="stats_pokemon" style="width: 160px;"></select>
+                </div>
+                <div class="field">
+                    Nature: 
+                    <select id="stats_nature" style="width: 160px;"></select>
+                </div>
             </div>
-            <div class="field">
-                Category: 
-                <select id="pkmn_category" onchange="updatePokemonList()" style="width: 160px;"></select>
+            <textarea id="enter_stats" placeholder="Level HP Atk Def Spa Spd Spe"></textarea>
+            <button class="btn-calc" onclick="calcularIVs()">Calculate IVs & Filter</button>
+            <br><br>
+
+            <h3>RNG Information</h3>
+            <div class="field-group">
+                <div class="field">TID: <input type="number" id="tid" value="34868"></div>
+                <div class="field">SID: <input type="number" id="sid" value="41173"></div>
+                <div class="field">Method: 
+                    <select id="method">
+                        <option value="1">Method 1 (Static)</option>
+                        <option value="2">Method 2 (Wild)</option>
+                        <option value="4">Method 4 (Rare)</option>
+                    </select>
+                </div>
+                <div class="field">Target Advances: <input type="number" id="target_adv" value="500"></div>
+                <div class="field">+/- (Offset): <input type="number" id="offset_adv" value="10"></div>
             </div>
-            <div class="field">
-                Pokemon: 
-                <select id="stats_pokemon" style="width: 160px;"></select>
+
+            <h3>Enter Seeds</h3>
+            <textarea id="enter_seeds" placeholder="FFFF (Empty for Reverse Search)"></textarea>
+            <button class="btn-main" id="searchBtn" onclick="buscar()">Search</button>
+        </div>
+
+        <div class="panel">
+            <h3>Filters</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 15px;">
+                <div>
+                    <div class="field">HP: <input type="number" id="hp_min" class="iv-input" value="0"> ~ <input type="number" id="hp_max" class="iv-input" value="31"></div>
+                    <div class="field">Atk: <input type="number" id="at_min" class="iv-input" value="0"> ~ <input type="number" id="at_max" class="iv-input" value="31"></div>
+                    <div class="field">Def: <input type="number" id="df_min" class="iv-input" value="0"> ~ <input type="number" id="df_max" class="iv-input" value="31"></div>
+                    <div class="field">SpA: <input type="number" id="sa_min" class="iv-input" value="0"> ~ <input type="number" id="sa_max" class="iv-input" value="31"></div>
+                    <div class="field">SpD: <input type="number" id="sd_min" class="iv-input" value="0"> ~ <input type="number" id="sd_max" class="iv-input" value="31"></div>
+                    <div class="field">Spe: <input type="number" id="sp_min" class="iv-input" value="0"> ~ <input type="number" id="sp_max" class="iv-input" value="31"></div>
+                </div>
+                <div>
+                    <div class="field">Nature: <select id="f_nature" style="width: 100px;"><option value="any">Any</option></select></div>
+                    <div class="field">Shiny: <select id="f_shiny" style="width: 100px;"><option value="any">Any</option><option value="yes">Shiny Only</option></select></div>
+                </div>
             </div>
-            <div class="field">
-                Nature: 
-                <select id="stats_nature" style="width: 160px;"></select>
+
+            <div class="scroll-table">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Advances</th><th>PID</th><th>Seed</th><th>Nature</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
-        <textarea id="enter_stats" placeholder="Level HP Atk Def Spa Spd Spe"></textarea>
-        <button class="btn-calc" onclick="calcularIVs()">Calculate IVs & Filter</button>
-        <br><br>
-
-        <h3>RNG Information</h3>
-        <div class="field-group">
-            <div class="field">TID: <input type="number" id="tid" value="34868"></div>
-            <div class="field">SID: <input type="number" id="sid" value="41173"></div>
-            <div class="field">Method: 
-                <select id="method">
-                    <option value="1">Method 1 (Static)</option>
-                    <option value="2">Method 2 (Wild)</option>
-                    <option value="4">Method 4 (Rare)</option>
-                </select>
-            </div>
-            <div class="field">Target Advances: <input type="number" id="target_adv" value="500"></div>
-            <div class="field">+/- (Offset): <input type="number" id="offset_adv" value="10"></div>
-        </div>
-
-        <h3>Enter Seeds</h3>
-        <textarea id="enter_seeds" placeholder="FFFF (Empty for Reverse Search)"></textarea>
-        <button class="btn-main" id="searchBtn" onclick="buscar()">Search</button>
     </div>
+</div>
 
+<div id="hunterTab" class="tab-content">
     <div class="panel">
-        <h3>Filters</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 15px;">
-            <div>
-                <div class="field">HP: <input type="number" id="hp_min" class="iv-input" value="0"> ~ <input type="number" id="hp_max" class="iv-input" value="31"></div>
-                <div class="field">Atk: <input type="number" id="at_min" class="iv-input" value="0"> ~ <input type="number" id="at_max" class="iv-input" value="31"></div>
-                <div class="field">Def: <input type="number" id="df_min" class="iv-input" value="0"> ~ <input type="number" id="df_max" class="iv-input" value="31"></div>
-                <div class="field">SpA: <input type="number" id="sa_min" class="iv-input" value="0"> ~ <input type="number" id="sa_max" class="iv-input" value="31"></div>
-                <div class="field">SpD: <input type="number" id="sd_min" class="iv-input" value="0"> ~ <input type="number" id="sd_max" class="iv-input" value="31"></div>
-                <div class="field">Spe: <input type="number" id="sp_min" class="iv-input" value="0"> ~ <input type="number" id="sp_max" class="iv-input" value="31"></div>
-            </div>
-            <div>
-                <div class="field">Nature: <select id="f_nature" style="width: 100px;"><option value="any">Any</option></select></div>
-                <div class="field">Shiny: <select id="f_shiny" style="width: 100px;"><option value="any">Any</option><option value="yes">Shiny Only</option></select></div>
-            </div>
-        </div>
-
-        <div class="scroll-table">
-            <table id="resultsTable">
-                <thead>
-                    <tr>
-                        <th>Advances</th><th>PID</th><th>Seed</th><th>Nature</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+        <h3>Hunter Mode</h3>
+        <p>Aquí irá el sistema de calibración en tiempo real y búsqueda dinámica de frames.</p>
+        <p><i>Work in progress...</i></p>
     </div>
 </div>
 
@@ -113,20 +140,40 @@
 <script>
     const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
     
-    // Categorías y Filtros por Versión
+    // Categorías completas que pediste
     const gameData = {
         "FRLG": {
             "Starters": ["Bulbasaur", "Charmander", "Squirtle"],
-            "Gifts": ["Eevee", "Lapras", "Hitmonlee", "Hitmonchan", "Omanyte", "Kabuto", "Aerodactyl"],
-            "Static/Legendaries": ["Articuno", "Zapdos", "Moltres", "Mewtwo", "Snorlax"],
-            "Wild (Method 2)": ["Pikachu", "Abra", "Clefairy", "Gastly", "Ditto"]
+            "Gifts": ["Eevee", "Lapras", "Togepi"],
+            "Game Corner": ["Abra", "Clefairy", "Dratini", "Scyther", "Pinsir", "Porygon"],
+            "Legendary": ["Articuno", "Zapdos", "Moltres", "Mewtwo", "Entei", "Raikou", "Suicune"],
+            "Event": ["Deoxys", "Lugia", "Ho-Oh"],
+            "Stationary": ["Snorlax", "Electrode"],
+            "Fossil": ["Omanyte", "Kabuto", "Aerodactyl"],
+            "Wild": ["Pikachu", "Gastly", "Ditto"]
         },
         "RSE": {
             "Starters": ["Treecko", "Torchic", "Mudkip"],
-            "Static": ["Kyogre", "Groudon", "Rayquaza", "Regirock", "Regice", "Registeel", "Beldum", "Castform"],
-            "Wild (Method 2)": ["Ralts", "Bagon", "Feebas", "Slakoth"]
+            "Gifts": ["Beldum", "Castform", "Wynaut"],
+            "Game Corner": [],
+            "Legendary": ["Kyogre", "Groudon", "Rayquaza", "Regirock", "Regice", "Registeel"],
+            "Event": ["Mew", "Lugia", "Ho-Oh", "Deoxys"],
+            "Stationary": ["Sudowoodo", "Kecleon"],
+            "Fossil": ["Lileep", "Anorith"],
+            "Wild": ["Ralts", "Bagon", "Feebas"]
         }
     };
+
+    // Navegación de pestañas
+    function openTab(evt, tabName) {
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
+        tablinks = document.getElementsByClassName("tab-button");
+        for (i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
 
     function updateCategories() {
         const version = document.getElementById('game_version').value;
@@ -145,8 +192,7 @@
         const mSel = document.getElementById('method');
         pSel.innerHTML = "";
         
-        // Auto-selección de método según categoría
-        if (category.includes("Wild")) mSel.value = "2";
+        if (category === "Wild") mSel.value = "2";
         else mSel.value = "1";
 
         gameData[version][category].forEach(name => {
@@ -154,7 +200,7 @@
         });
     }
 
-    // Inicialización de Natures
+    // Inicialización
     const nSel = document.getElementById('f_nature');
     const sNSel = document.getElementById('stats_nature');
     natures.forEach((n, i) => { 
@@ -227,7 +273,6 @@
         
         tBody.innerHTML = "<tr><td colspan='11'>Calculando... (El pato está trabajando)</td></tr>";
         btn.disabled = true;
-        btn.innerText = "Buscando...";
 
         const filters = {
             shiny: document.getElementById('f_shiny').value,
@@ -242,7 +287,6 @@
 
         if (worker) worker.terminate();
         worker = new Worker('worker.js');
-
         worker.postMessage({ seedsList, tid, sid, target, offset, filters, natures, method });
 
         worker.onmessage = function(e) {
@@ -255,7 +299,6 @@
                 </tr>`;
             });
             btn.disabled = false;
-            btn.innerText = "Search";
         };
     }
 </script>
