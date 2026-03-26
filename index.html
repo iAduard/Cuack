@@ -33,13 +33,22 @@
 
 <div class="grid-container">
     <div class="panel">
-        <h3>Enter Stats</h3>
+        <h3>Version & Pokemon</h3>
         <div class="field-group">
             <div class="field">
-                Pokemon: 
-                <select id="stats_pokemon" style="width: 160px;">
-                    <option value="">Cargando datos...</option>
+                Version: 
+                <select id="game_version" onchange="updateCategories()" style="width: 160px;">
+                    <option value="FRLG">Fire Red / Leaf Green</option>
+                    <option value="RSE">Emerald / Ruby / Sapphire</option>
                 </select>
+            </div>
+            <div class="field">
+                Category: 
+                <select id="pkmn_category" onchange="updatePokemonList()" style="width: 160px;"></select>
+            </div>
+            <div class="field">
+                Pokemon: 
+                <select id="stats_pokemon" style="width: 160px;"></select>
             </div>
             <div class="field">
                 Nature: 
@@ -56,9 +65,9 @@
             <div class="field">SID: <input type="number" id="sid" value="41173"></div>
             <div class="field">Method: 
                 <select id="method">
-                    <option value="1">Method 1</option>
-                    <option value="2">Method 2</option>
-                    <option value="4">Method 4</option>
+                    <option value="1">Method 1 (Static)</option>
+                    <option value="2">Method 2 (Wild)</option>
+                    <option value="4">Method 4 (Rare)</option>
                 </select>
             </div>
             <div class="field">Target Advances: <input type="number" id="target_adv" value="500"></div>
@@ -67,7 +76,6 @@
 
         <h3>Enter Seeds</h3>
         <textarea id="enter_seeds" placeholder="FFFF (Empty for Reverse Search)"></textarea>
-        
         <button class="btn-main" id="searchBtn" onclick="buscar()">Search</button>
     </div>
 
@@ -85,8 +93,6 @@
             <div>
                 <div class="field">Nature: <select id="f_nature" style="width: 100px;"><option value="any">Any</option></select></div>
                 <div class="field">Shiny: <select id="f_shiny" style="width: 100px;"><option value="any">Any</option><option value="yes">Shiny Only</option></select></div>
-                <div class="field">Ability: <select id="f_ability" style="width: 100px;"><option value="any">Any</option></select></div>
-                <div class="field">Gender: <select id="f_gender" style="width: 100px;"><option value="any">Any</option></select></div>
             </div>
         </div>
 
@@ -106,35 +112,66 @@
 <script src="pokemonData.js"></script>
 <script>
     const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
+    
+    // Categorías y Filtros por Versión
+    const gameData = {
+        "FRLG": {
+            "Starters": ["Bulbasaur", "Charmander", "Squirtle"],
+            "Gifts": ["Eevee", "Lapras", "Hitmonlee", "Hitmonchan", "Omanyte", "Kabuto", "Aerodactyl"],
+            "Static/Legendaries": ["Articuno", "Zapdos", "Moltres", "Mewtwo", "Snorlax"],
+            "Wild (Method 2)": ["Pikachu", "Abra", "Clefairy", "Gastly", "Ditto"]
+        },
+        "RSE": {
+            "Starters": ["Treecko", "Torchic", "Mudkip"],
+            "Static": ["Kyogre", "Groudon", "Rayquaza", "Regirock", "Regice", "Registeel", "Beldum", "Castform"],
+            "Wild (Method 2)": ["Ralts", "Bagon", "Feebas", "Slakoth"]
+        }
+    };
+
+    function updateCategories() {
+        const version = document.getElementById('game_version').value;
+        const catSel = document.getElementById('pkmn_category');
+        catSel.innerHTML = "";
+        Object.keys(gameData[version]).forEach(cat => {
+            catSel.add(new Option(cat, cat));
+        });
+        updatePokemonList();
+    }
+
+    function updatePokemonList() {
+        const version = document.getElementById('game_version').value;
+        const category = document.getElementById('pkmn_category').value;
+        const pSel = document.getElementById('stats_pokemon');
+        const mSel = document.getElementById('method');
+        pSel.innerHTML = "";
+        
+        // Auto-selección de método según categoría
+        if (category.includes("Wild")) mSel.value = "2";
+        else mSel.value = "1";
+
+        gameData[version][category].forEach(name => {
+            if (pokemonDB[name]) pSel.add(new Option(name, name));
+        });
+    }
+
+    // Inicialización de Natures
     const nSel = document.getElementById('f_nature');
     const sNSel = document.getElementById('stats_nature');
-    const pSel = document.getElementById('stats_pokemon');
-
     natures.forEach((n, i) => { 
         nSel.add(new Option(n, i)); 
         sNSel.add(new Option(n, i));
     });
 
-    function initPokemonList() {
-        if (typeof pokemonDB !== 'undefined') {
-            pSel.innerHTML = '<option value="">Selecciona...</option>';
-            Object.keys(pokemonDB).sort().forEach(name => { 
-                pSel.add(new Option(name, name)); 
-            });
-        } else {
-            pSel.innerHTML = '<option value="">Error: pokemonData.js no cargado</option>';
-        }
-    }
-
-    window.onload = initPokemonList;
+    window.onload = () => {
+        if (typeof pokemonDB !== 'undefined') updateCategories();
+        else document.getElementById('stats_pokemon').innerHTML = '<option>Error DB</option>';
+    };
 
     function calcularIVs() {
-        if (typeof pokemonDB === 'undefined') return alert("Error: Base de datos no disponible.");
-        const pName = pSel.value;
+        const pName = document.getElementById('stats_pokemon').value;
         const natureIdx = parseInt(sNSel.value);
         const lines = document.getElementById('enter_stats').value.trim().split('\n');
-        
-        if (!pName || lines.length === 0) return alert("Selecciona Pokémon y entra al menos una línea de stats.");
+        if (!pName || lines.length === 0) return alert("Selecciona Pokémon y entra stats.");
 
         const base = pokemonDB[pName];
         const ids = ['hp', 'at', 'df', 'sa', 'sd', 'sp'];
@@ -148,14 +185,10 @@
             const raw = line.trim().split(/\s+/);
             if (raw.length < 7) return;
             const [lvl, ...stats] = raw.map(Number);
-
             ids.forEach((id, i) => {
                 let currentLineMin = -1, currentLineMax = -1;
                 for(let iv=0; iv<=31; iv++) {
-                    let calc;
-                    if(i===0) calc = Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10;
-                    else calc = Math.floor((Math.floor(((base[i]*2 + iv)*lvl)/100) + 5) * mods[i]);
-                    
+                    let calc = (i===0) ? Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10 : Math.floor((Math.floor(((base[i]*2 + iv)*lvl)/100) + 5) * mods[i]);
                     if(calc === stats[i]) {
                         if(currentLineMin === -1) currentLineMin = iv;
                         currentLineMax = iv;
@@ -175,30 +208,23 @@
         document.getElementById('f_nature').value = natureIdx;
     }
 
-    // --- SECCIÓN DEL WORKER ---
     let worker;
 
     function buscar() {
         const tid = parseInt(document.getElementById('tid').value);
         const sid = parseInt(document.getElementById('sid').value);
+        const method = parseInt(document.getElementById('method').value);
         const seedsText = document.getElementById('enter_seeds').value.trim();
         const btn = document.getElementById('searchBtn');
         const tBody = document.querySelector('#resultsTable tbody');
         
         let seedsList = [];
-        if (seedsText) {
-            seedsList = seedsText.split('\n').map(s => s.trim());
-        } else {
-            // Reverse Search automático (0000 a FFFF)
-            for (let i = 0; i <= 0xFFFF; i++) {
-                seedsList.push(i.toString(16).toUpperCase().padStart(4, '0'));
-            }
-        }
+        if (seedsText) seedsList = seedsText.split('\n').map(s => s.trim());
+        else for (let i = 0; i <= 0xFFFF; i++) seedsList.push(i.toString(16).toUpperCase().padStart(4, '0'));
 
         const target = parseInt(document.getElementById('target_adv').value);
         const offset = parseInt(document.getElementById('offset_adv').value);
         
-        // UI Feedback
         tBody.innerHTML = "<tr><td colspan='11'>Calculando... (El pato está trabajando)</td></tr>";
         btn.disabled = true;
         btn.innerText = "Buscando...";
@@ -214,38 +240,22 @@
             sp_min: parseInt(document.getElementById('sp_min').value), sp_max: parseInt(document.getElementById('sp_max').value)
         };
 
-        // Crear/Reiniciar Worker
         if (worker) worker.terminate();
         worker = new Worker('worker.js');
 
-        // Enviar datos al Worker
-        worker.postMessage({ seedsList, tid, sid, target, offset, filters, natures });
+        worker.postMessage({ seedsList, tid, sid, target, offset, filters, natures, method });
 
-        // Recibir resultados del Worker
         worker.onmessage = function(e) {
             const results = e.data;
-            tBody.innerHTML = "";
-            
-            if(results.length === 0) {
-                tBody.innerHTML = "<tr><td colspan='11'>No se encontraron resultados.</td></tr>";
-            } else {
-                results.forEach(r => {
-                    tBody.innerHTML += `<tr class="${r.isS ? 'shiny-row' : ''}">
-                        <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td>
-                        <td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td><td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
-                    </tr>`;
-                });
-            }
-            
+            tBody.innerHTML = results.length ? "" : "<tr><td colspan='11'>No se encontraron resultados.</td></tr>";
+            results.forEach(r => {
+                tBody.innerHTML += `<tr class="${r.isS ? 'shiny-row' : ''}">
+                    <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td>
+                    <td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td><td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
+                </tr>`;
+            });
             btn.disabled = false;
             btn.innerText = "Search";
-        };
-
-        worker.onerror = function(err) {
-            console.error("Error en el worker:", err);
-            btn.disabled = false;
-            btn.innerText = "Search";
-            tBody.innerHTML = "<tr><td colspan='11'>Error en el cálculo. Revisa la consola.</td></tr>";
         };
     }
 </script>
