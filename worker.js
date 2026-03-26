@@ -54,7 +54,7 @@ self.onmessage = function(e) {
                     ivs.sd < filters.sd_min || ivs.sd > filters.sd_max || ivs.s < filters.sp_min || ivs.s > filters.sp_max) passF = false;
 
                 if (passF) {
-                    results.push({ adv, pid: pid.toString(16).toUpperCase(), sHex, nature: natures[nIdx], ivs, isS });
+                    results.push({ adv, pid: pid.toString(16).toUpperCase(), sHex, nature: natures[nIdx], ability: pid & 1, ivs, isS });
                 }
             }
             seed = lcg(seed);
