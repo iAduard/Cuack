@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuack-RNG | Gen 3 Assistant</title>
+    <style>
+        body { background: #1a1a1a; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; }
+        .pato { width: 150px; margin-top: 20px; }
+        input { background: #333; color: #fff; border: 1px solid #00ff00; padding: 5px; margin: 5px; }
+        button { background: #00ff00; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+        th, td { border: 1px solid #444; padding: 8px; }
+        .shiny { color: #ffff00; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
+    </style>
+</head>
+<body>
+    <h1>🦆 CUACK-RNG 🦆</h1>
+    <p>Gen 3 Seed Assistant Web (Alpha)</p>
+
+    <div>
+        TID: <input type="number" id="tid" value="0">
+        SID: <input type="number" id="sid" value="0">
+        Seed: <input type="text" id="seed" value="0">
+        <button onclick="buscar()">BUSCAR SHINIES</button>
+    </div>
+
+    <table id="results">
+        <thead>
+            <tr>
+                <th>Frame</th>
+                <th>PID</th>
+                <th>Naturaleza</th>
+                <th>Shiny?</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
+
+        function lcg(seed) {
+            return (BigInt(seed) * 1103515245n + 24691n) & 0xFFFFFFFFn;
+        }
+
+        function buscar() {
+            const tid = parseInt(document.getElementById('tid').value);
+            const sid = parseInt(document.getElementById('sid').value);
+            let seed = BigInt("0x" + document.getElementById('seed').value);
+            const tableBody = document.querySelector('#results tbody');
+            tableBody.innerHTML = "";
+
+            for (let frame = 0; frame < 5000; frame++) {
+                seed = lcg(seed);
+                let pidLow = Number(seed >> 16n);
+                seed = lcg(seed);
+                let pidHigh = Number(seed >> 16n);
+                let pid = (pidHigh << 16) | pidLow;
+
+                let shinyValue = (tid ^ sid ^ pidHigh ^ pidLow);
+                let isShiny = shinyValue < 8;
+
+                if (isShiny) {
+                    let row = `<tr>
+                        <td>${frame}</td>
+                        <td>${pid.toString(16).toUpperCase()}</td>
+                        <td>${natures[pid % 25]}</td>
+                        <td class="shiny">¡SÍ! ✨</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
