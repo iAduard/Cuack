@@ -4,104 +4,140 @@
     <meta charset="UTF-8">
     <title>Cuack-RNG | Gen 3 Assistant</title>
     <style>
-        body { background: #1a1a1a; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; }
-        .pato { width: 150px; margin-top: 20px; }
-        input { background: #333; color: #fff; border: 1px solid #00ff00; padding: 5px; margin: 5px; }
-        button { background: #00ff00; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-        table { margin: 20px auto; border-collapse: collapse; width: 90%; }
-        th, td { border: 1px solid #444; padding: 8px; font-size: 0.9em; }
-        th { background: #2a2a2a; }
-        .shiny { color: #ffff00; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
+        body { background: #0f111a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 12px; margin: 20px; }
+        .grid-container { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .panel { border: 1px solid #333; padding: 15px; background: #161922; border-radius: 4px; }
+        h3 { margin: 0 0 15px 0; font-size: 13px; color: #00ff00; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .field { display: flex; justify-content: space-between; align-items: center; }
+        input, select { background: #0b0d13; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 2px; width: 140px; }
+        input[type="number"].iv-input { width: 45px; text-align: center; }
+        button { background: #00ff00; color: #000; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        button:hover { background: #00cc00; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .scroll-table { margin-top: 20px; overflow-x: auto; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; background: #161922; }
+        th, td { border: 1px solid #333; padding: 6px; text-align: center; font-family: 'Consolas', monospace; }
+        th { background: #1f2330; color: #00ff00; position: sticky; top: 0; }
+        tr:hover { background: #1e2230; }
+        .shiny-row { background: rgba(255, 255, 0, 0.1) !important; color: #ffff00; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>🦆 CUACK-RNG 🦆</h1>
-    <p>Gen 3 Seed Assistant Web (Alpha) - Motor PokeFinder JS</p>
 
-    <div>
-        TID: <input type="number" id="tid" placeholder="TID" value="0">
-        SID: <input type="number" id="sid" placeholder="SID" value="0">
-        Seed: <input type="text" id="seed" placeholder="Semilla (Hex)" value="0">
-        <button onclick="buscar()">BUSCAR SHINIES</button>
+<div class="grid-container">
+    <div class="panel">
+        <h3>Configuración del RNG</h3>
+        <div class="field-group">
+            <div class="field">TID: <input type="number" id="tid" value="34868"></div>
+            <div class="field">SID: <input type="number" id="sid" value="41173"></div>
+            <div class="field">Método: 
+                <select id="method">
+                    <option value="1">Método 1 (Estáticos)</option>
+                </select>
+            </div>
+            <div class="field">Initial Seed: <input type="text" id="seed" value="0" placeholder="Hex"></div>
+            <div class="field">Min Advances: <input type="number" id="min_adv" value="0"></div>
+            <div class="field">Max Advances: <input type="number" id="max_adv" value="10000"></div>
+        </div>
+        
+        <h3>Filtros de Búsqueda</h3>
+        <div class="field-group">
+            <div class="field">Naturaleza: 
+                <select id="f_nature">
+                    <option value="any">Cualquiera</option>
+                </select>
+            </div>
+            <div class="field">Shiny: 
+                <select id="f_shiny">
+                    <option value="any">Cualquiera</option>
+                    <option value="yes">Sólo Shiny</option>
+                </select>
+            </div>
+            <div style="border-top: 1px solid #333; padding-top: 10px;">
+                <div class="field">PS: <input type="number" id="hp_min" class="iv-input" value="0"> - <input type="number" id="hp_max" class="iv-input" value="31"></div>
+                <div class="field">At: <input type="number" id="at_min" class="iv-input" value="0"> - <input type="number" id="at_max" class="iv-input" value="31"></div>
+                <div class="field">Df: <input type="number" id="df_min" class="iv-input" value="0"> - <input type="number" id="df_max" class="iv-input" value="31"></div>
+                <div class="field">SA: <input type="number" id="sa_min" class="iv-input" value="0"> - <input type="number" id="sa_max" class="iv-input" value="31"></div>
+                <div class="field">SD: <input type="number" id="sd_min" class="iv-input" value="0"> - <input type="number" id="sd_max" class="iv-input" value="31"></div>
+                <div class="field">Ve: <input type="number" id="sp_min" class="iv-input" value="0"> - <input type="number" id="sp_max" class="iv-input" value="31"></div>
+            </div>
+        </div>
+        <button onclick="buscar()">GENERAR RESULTADOS</button>
     </div>
 
-    <table id="results">
-        <thead>
-            <tr>
-                <th>Frame</th>
-                <th>PID</th>
-                <th>Naturaleza</th>
-                <th>IVs (HP/At/De/SpA/SpD/Ve)</th>
-                <th>Shiny?</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="scroll-table">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Advances</th>
+                    <th>PID (Hex)</th>
+                    <th>Shiny</th>
+                    <th>Nature</th>
+                    <th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th>
+                    <th>Hidden Power</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
 
-    <script>
-        const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
+<script>
+    const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
+    
+    // Inyectar naturalezas en el select
+    const nSel = document.getElementById('f_nature');
+    natures.forEach((n, i) => { nSel.add(new Option(n, i)); });
 
-        function lcg(seed) {
-            return (BigInt(seed) * 1103515245n + 24691n) & 0xFFFFFFFFn;
-        }
+    function lcg(s) { return (BigInt(s) * 1103515245n + 24691n) & 0xFFFFFFFFn; }
 
-        function buscar() {
-            const tid = parseInt(document.getElementById('tid').value);
-            const sid = parseInt(document.getElementById('sid').value);
-            let initialSeed = BigInt("0x" + document.getElementById('seed').value);
-            const tableBody = document.querySelector('#results tbody');
-            tableBody.innerHTML = "";
+    function buscar() {
+        const tid = parseInt(document.getElementById('tid').value);
+        const sid = parseInt(document.getElementById('sid').value);
+        let seed = BigInt("0x" + document.getElementById('seed').value);
+        const minA = parseInt(document.getElementById('min_adv').value);
+        const maxA = parseInt(document.getElementById('max_adv').value);
+        const tBody = document.querySelector('#resultsTable tbody');
+        tBody.innerHTML = "";
 
-            let seed = initialSeed;
+        // Adelantar hasta Min Advances
+        for(let i=0; i<minA; i++) seed = lcg(seed);
 
-            // Buscamos 10,000 frames (puedes subirlo a 50,000 si quieres)
-            for (let frame = 0; frame <= 10000; frame++) {
-                let currentSeed = seed;
+        for (let adv = minA; adv <= maxA; adv++) {
+            let s = seed;
+            s = lcg(s); let pL = Number(s >> 16n);
+            s = lcg(s); let pH = Number(s >> 16n);
+            let pid = ((pH << 16) >>> 0) | pL;
 
-                // --- MOTOR DE GENERACIÓN MÉTODO 1 (Legendarios/Estáticos) ---
-                
-                // 1. Generar PID
-                currentSeed = lcg(currentSeed);
-                let pidLow = Number(currentSeed >> 16n);
-                currentSeed = lcg(currentSeed);
-                let pidHigh = Number(currentSeed >> 16n);
-                let pid = ((pidHigh << 16) >>> 0) | pidLow;
+            s = lcg(s); let iv1 = Number(s >> 16n);
+            s = lcg(s); let iv2 = Number(s >> 16n);
+            let ivs = { h: iv1&31, a: (iv1>>5)&31, d: (iv1>>10)&31, s: iv2&31, sa: (iv2>>5)&31, sd: (iv2>>10)&31 };
 
-                // 2. Generar IVs (Siguientes 2 llamadas al LCG)
-                currentSeed = lcg(currentSeed);
-                let iv1 = Number(currentSeed >> 16n);
-                currentSeed = lcg(currentSeed);
-                let iv2 = Number(currentSeed >> 16n);
+            let nIdx = pid % 25;
+            let isS = (tid ^ sid ^ pH ^ pL) < 8;
 
-                let ivs = {
-                    hp: iv1 & 31,
-                    atk: (iv1 >> 5) & 31,
-                    def: (iv1 >> 10) & 31,
-                    spe: iv2 & 31,
-                    spa: (iv2 >> 5) & 31,
-                    spd: (iv2 >> 10) & 31
-                };
-
-                // 3. Verificación Shiny
-                let shinyValue = (tid ^ sid ^ pidHigh ^ pidLow);
-                let isShiny = shinyValue < 8;
-
-                // Filtramos solo para mostrar Shinies por ahora
-                if (isShiny) {
-                    let row = `<tr>
-                        <td>${frame}</td>
-                        <td class="${isShiny ? 'shiny' : ''}">${(pid >>> 0).toString(16).toUpperCase()}</td>
-                        <td>${natures[pid % 25]}</td>
-                        <td>${ivs.hp}/${ivs.atk}/${ivs.def}/${ivs.spa}/${ivs.spd}/${ivs.spe}</td>
-                        <td class="shiny">✨ SÍ</td>
-                    </tr>`;
-                    tableBody.innerHTML += row;
-                }
-
-                // Avanzar la semilla base para el siguiente frame
-                seed = lcg(seed);
+            // Filtros Lógicos
+            if (document.getElementById('f_shiny').value === 'yes' && !isS) { seed = lcg(seed); continue; }
+            if (document.getElementById('f_nature').value !== 'any' && nIdx != document.getElementById('f_nature').value) { seed = lcg(seed); continue; }
+            
+            const v = (id) => parseInt(document.getElementById(id).value);
+            if (ivs.h < v('hp_min') || ivs.h > v('hp_max') || ivs.a < v('at_min') || ivs.a > v('at_max') ||
+                ivs.d < v('df_min') || ivs.d > v('df_max') || ivs.sa < v('sa_min') || ivs.sa > v('sa_max') ||
+                ivs.sd < v('sd_min') || ivs.sd > v('sd_max') || ivs.s < v('sp_min') || ivs.s > v('sp_max')) {
+                seed = lcg(seed); continue;
             }
+
+            // Renderizado de Output
+            let row = `<tr class="${isS ? 'shiny-row' : ''}">
+                <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${isS ? '✨' : ''}</td>
+                <td>${natures[nIdx]}</td><td>${ivs.h}</td><td>${ivs.a}</td><td>${ivs.d}</td>
+                <td>${ivs.sa}</td><td>${ivs.sd}</td><td>${ivs.s}</td><td>TBD</td>
+            </tr>`;
+            tBody.innerHTML += row;
+            seed = lcg(seed);
         }
-    </script>
+    }
+</script>
 </body>
 </html>
