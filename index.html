@@ -133,26 +133,52 @@
         if (typeof pokemonDB === 'undefined') return alert("Error: Base de datos no disponible.");
         const pName = pSel.value;
         const natureIdx = parseInt(sNSel.value);
-        const raw = document.getElementById('enter_stats').value.trim().split(/\s+/);
-        if (!pName || raw.length < 7) return alert("Selecciona Pokémon y entra: Level HP Atk Def Spa Spd Spe");
+        // Ahora dividimos por líneas para procesar múltiples niveles
+        const lines = document.getElementById('enter_stats').value.trim().split('\n');
+        
+        if (!pName || lines.length === 0) return alert("Selecciona Pokémon y entra al menos una línea de stats.");
 
-        const [lvl, ...stats] = raw.map(Number);
         const base = pokemonDB[pName];
         const ids = ['hp', 'at', 'df', 'sa', 'sd', 'sp'];
         const mods = [1,1,1,1,1,1]; 
         const up = Math.floor(natureIdx / 5), down = natureIdx % 5;
         if(up !== down) { mods[up+1] += 0.1; mods[down+1] -= 0.1; }
 
-        ids.forEach((id, i) => {
-            let foundMin = -1, foundMax = -1;
-            for(let iv=0; iv<=31; iv++) {
-                let calc;
-                if(i===0) calc = Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10;
-                else calc = Math.floor((Math.floor(((base[i]*2 + iv)*lvl)/100) + 5) * mods[i]);
-                if(calc === stats[i]) {
-                    if(foundMin === -1) foundMin = iv;
-                    foundMax = iv;
+        // Inicializamos los rangos finales con el máximo posible
+        let finalRanges = ids.map(() => ({ min: 0, max: 31 }));
+
+        lines.forEach(line => {
+            const raw = line.trim().split(/\s+/);
+            if (raw.length < 7) return;
+            const [lvl, ...stats] = raw.map(Number);
+
+            ids.forEach((id, i) => {
+                let currentLineMin = -1, currentLineMax = -1;
+                for(let iv=0; iv<=31; iv++) {
+                    let calc;
+                    if(i===0) calc = Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10;
+                    else calc = Math.floor((Math.floor(((base[i]*2 + iv)*lvl)/100) + 5) * mods[i]);
+                    
+                    if(calc === stats[i]) {
+                        if(currentLineMin === -1) currentLineMin = iv;
+                        currentLineMax = iv;
+                    }
                 }
+                // Ajustamos el rango global: el nuevo min es el más alto, el nuevo max es el más bajo
+                if (currentLineMin !== -1) {
+                    finalRanges[i].min = Math.max(finalRanges[i].min, currentLineMin);
+                    finalRanges[i].max = Math.min(finalRanges[i].max, currentLineMax);
+                }
+            });
+        });
+
+        // Actualizamos los inputs visuales con el rango refinado
+        ids.forEach((id, i) => {
+            document.getElementById(id+'_min').value = finalRanges[i].min;
+            document.getElementById(id+'_max').value = finalRanges[i].max;
+        });
+        document.getElementById('f_nature').value = natureIdx;
+    }
             }
             document.getElementById(id+'_min').value = foundMin === -1 ? 0 : foundMin;
             document.getElementById(id+'_max').value = foundMax === -1 ? 31 : foundMax;
