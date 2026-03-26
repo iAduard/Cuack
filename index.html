@@ -4,89 +4,95 @@
     <meta charset="UTF-8">
     <title>Cuack-RNG | Gen 3 Assistant</title>
     <style>
-        body { background: #0f111a; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 12px; margin: 20px; }
-        .grid-container { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
-        .panel { border: 1px solid #333; padding: 15px; background: #161922; border-radius: 4px; }
-        h3 { margin: 0 0 15px 0; font-size: 13px; color: #00ff00; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        body { background: #1a202c; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 11px; margin: 20px; }
+        .grid-container { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        .panel { border: 1px solid #4a5568; padding: 15px; background: #2d3748; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h3 { margin: 0 0 10px 0; font-size: 11px; color: #cbd5e0; text-transform: uppercase; border-bottom: 1px solid #4a5568; padding-bottom: 5px; letter-spacing: 0.5px; }
+        .field-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         .field { display: flex; justify-content: space-between; align-items: center; }
-        input, select { background: #0b0d13; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 2px; width: 140px; }
-        input[type="number"].iv-input { width: 45px; text-align: center; }
-        button { background: #00ff00; color: #000; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
-        button:hover { background: #00cc00; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
-        .scroll-table { margin-top: 20px; overflow-x: auto; border: 1px solid #333; }
-        table { width: 100%; border-collapse: collapse; background: #161922; }
-        th, td { border: 1px solid #333; padding: 6px; text-align: center; font-family: 'Consolas', monospace; }
-        th { background: #1f2330; color: #00ff00; position: sticky; top: 0; }
-        tr:hover { background: #1e2230; }
-        .shiny-row { background: rgba(255, 255, 0, 0.1) !important; color: #ffff00; font-weight: bold; }
+        
+        textarea { background: #1a202c; color: #fff; border: 1px solid #4a5568; width: 100%; height: 90px; resize: none; font-family: 'Consolas', monospace; padding: 8px; box-sizing: border-box; border-radius: 2px; }
+        input, select { background: #1a202c; color: #fff; border: 1px solid #4a5568; padding: 4px; width: 140px; border-radius: 2px; }
+        input[type="number"].iv-input { width: 40px; text-align: center; }
+        
+        .btn-calc { background: #4a5568; color: #fff; border: 1px solid #718096; padding: 6px; font-size: 10px; width: 100%; cursor: pointer; margin-top: 5px; text-transform: uppercase; }
+        .btn-calc:hover { background: #718096; }
+        .btn-main { background: #edf2f7; color: #1a202c; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 15px; border-radius: 2px; text-transform: uppercase; }
+        .btn-main:hover { background: #cbd5e0; }
+
+        .scroll-table { overflow-y: auto; max-height: 600px; border: 1px solid #4a5568; background: #1a202c; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #4a5568; padding: 7px; text-align: center; font-family: 'Consolas', monospace; }
+        th { background: #2d3748; color: #fff; position: sticky; top: 0; z-index: 10; }
+        tr:hover { background: #2d3748; }
+        .shiny-row { background: rgba(255, 255, 255, 0.15) !important; color: #fff; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="grid-container">
     <div class="panel">
-        <h3>Configuración del RNG</h3>
+        <h3>Enter Stats</h3>
+        <textarea id="enter_stats" placeholder="Level HP Atk Def Spa Spd Spe"></textarea>
+        <button class="btn-calc" onclick="alert('Lógica de cálculo de IVs en desarrollo...')">Calculate IV Ranges (Send to Filters)</button>
+        <br><br>
+
+        <h3>RNG Information</h3>
         <div class="field-group">
             <div class="field">TID: <input type="number" id="tid" value="34868"></div>
             <div class="field">SID: <input type="number" id="sid" value="41173"></div>
-            <div class="field">Método: 
+            <div class="field">Method: 
                 <select id="method">
-                    <option value="1">Método 1 (Estáticos)</option>
+                    <option value="1">Method 1</option>
+                    <option value="2">Method 2</option>
+                    <option value="4">Method 4</option>
                 </select>
             </div>
-            <div class="field">Initial Seed: <input type="text" id="seed" value="0" placeholder="Hex"></div>
-            <div class="field">Min Advances: <input type="number" id="min_adv" value="0"></div>
-            <div class="field">Max Advances: <input type="number" id="max_adv" value="10000"></div>
+            <div class="field">Target Advances: <input type="number" id="target_adv" value="500"></div>
+            <div class="field">+/- (Offset): <input type="number" id="offset_adv" value="10"></div>
         </div>
+
+        <h3>Enter Seeds</h3>
+        <textarea id="enter_seeds" placeholder="FFFF"></textarea>
         
-        <h3>Filtros de Búsqueda</h3>
-        <div class="field-group">
-            <div class="field">Naturaleza: 
-                <select id="f_nature">
-                    <option value="any">Cualquiera</option>
-                </select>
-            </div>
-            <div class="field">Shiny: 
-                <select id="f_shiny">
-                    <option value="any">Cualquiera</option>
-                    <option value="yes">Sólo Shiny</option>
-                </select>
-            </div>
-            <div style="border-top: 1px solid #333; padding-top: 10px;">
-                <div class="field">PS: <input type="number" id="hp_min" class="iv-input" value="0"> - <input type="number" id="hp_max" class="iv-input" value="31"></div>
-                <div class="field">At: <input type="number" id="at_min" class="iv-input" value="0"> - <input type="number" id="at_max" class="iv-input" value="31"></div>
-                <div class="field">Df: <input type="number" id="df_min" class="iv-input" value="0"> - <input type="number" id="df_max" class="iv-input" value="31"></div>
-                <div class="field">SA: <input type="number" id="sa_min" class="iv-input" value="0"> - <input type="number" id="sa_max" class="iv-input" value="31"></div>
-                <div class="field">SD: <input type="number" id="sd_min" class="iv-input" value="0"> - <input type="number" id="sd_max" class="iv-input" value="31"></div>
-                <div class="field">Ve: <input type="number" id="sp_min" class="iv-input" value="0"> - <input type="number" id="sp_max" class="iv-input" value="31"></div>
-            </div>
-        </div>
-        <button onclick="buscar()">GENERAR RESULTADOS</button>
+        <button class="btn-main" onclick="buscar()">Search</button>
     </div>
 
-    <div class="scroll-table">
-        <table id="resultsTable">
-            <thead>
-                <tr>
-                    <th>Advances</th>
-                    <th>PID (Hex)</th>
-                    <th>Shiny</th>
-                    <th>Nature</th>
-                    <th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th>
-                    <th>Hidden Power</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
+    <div class="panel">
+        <h3>Filters</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 15px;">
+            <div>
+                <div class="field">HP: <input type="number" id="hp_min" class="iv-input" value="0"> ~ <input type="number" id="hp_max" class="iv-input" value="31"></div>
+                <div class="field">Atk: <input type="number" id="at_min" class="iv-input" value="0"> ~ <input type="number" id="at_max" class="iv-input" value="31"></div>
+                <div class="field">Def: <input type="number" id="df_min" class="iv-input" value="0"> ~ <input type="number" id="df_max" class="iv-input" value="31"></div>
+                <div class="field">SpA: <input type="number" id="sa_min" class="iv-input" value="0"> ~ <input type="number" id="sa_max" class="iv-input" value="31"></div>
+                <div class="field">SpD: <input type="number" id="sd_min" class="iv-input" value="0"> ~ <input type="number" id="sd_max" class="iv-input" value="31"></div>
+                <div class="field">Spe: <input type="number" id="sp_min" class="iv-input" value="0"> ~ <input type="number" id="sp_max" class="iv-input" value="31"></div>
+            </div>
+            <div>
+                <div class="field">Nature: <select id="f_nature" style="width: 100px;"><option value="any">Any</option></select></div>
+                <div class="field">Shiny: <select id="f_shiny" style="width: 100px;"><option value="any">Any</option><option value="yes">Shiny Only</option></select></div>
+                <div class="field">Ability: <select id="f_ability" style="width: 100px;"><option value="any">Any</option></select></div>
+                <div class="field">Gender: <select id="f_gender" style="width: 100px;"><option value="any">Any</option></select></div>
+            </div>
+        </div>
+
+        <div class="scroll-table">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Advances</th><th>PID</th><th>Nature</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
     const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
-    
-    // Inyectar naturalezas en el select
     const nSel = document.getElementById('f_nature');
     natures.forEach((n, i) => { nSel.add(new Option(n, i)); });
 
@@ -95,48 +101,52 @@
     function buscar() {
         const tid = parseInt(document.getElementById('tid').value);
         const sid = parseInt(document.getElementById('sid').value);
-        let seed = BigInt("0x" + document.getElementById('seed').value);
-        const minA = parseInt(document.getElementById('min_adv').value);
-        const maxA = parseInt(document.getElementById('max_adv').value);
+        const seedsText = document.getElementById('enter_seeds').value.trim();
+        const seedsList = seedsText ? seedsText.split('\n') : ["0"];
+        const target = parseInt(document.getElementById('target_adv').value);
+        const offset = parseInt(document.getElementById('offset_adv').value);
         const tBody = document.querySelector('#resultsTable tbody');
         tBody.innerHTML = "";
 
-        // Adelantar hasta Min Advances
-        for(let i=0; i<minA; i++) seed = lcg(seed);
+        const minV = (id) => parseInt(document.getElementById(id).value);
 
-        for (let adv = minA; adv <= maxA; adv++) {
-            let s = seed;
-            s = lcg(s); let pL = Number(s >> 16n);
-            s = lcg(s); let pH = Number(s >> 16n);
-            let pid = ((pH << 16) >>> 0) | pL;
-
-            s = lcg(s); let iv1 = Number(s >> 16n);
-            s = lcg(s); let iv2 = Number(s >> 16n);
-            let ivs = { h: iv1&31, a: (iv1>>5)&31, d: (iv1>>10)&31, s: iv2&31, sa: (iv2>>5)&31, sd: (iv2>>10)&31 };
-
-            let nIdx = pid % 25;
-            let isS = (tid ^ sid ^ pH ^ pL) < 8;
-
-            // Filtros Lógicos
-            if (document.getElementById('f_shiny').value === 'yes' && !isS) { seed = lcg(seed); continue; }
-            if (document.getElementById('f_nature').value !== 'any' && nIdx != document.getElementById('f_nature').value) { seed = lcg(seed); continue; }
+        seedsList.forEach(sHex => {
+            let seed = BigInt("0x" + sHex.trim());
             
-            const v = (id) => parseInt(document.getElementById(id).value);
-            if (ivs.h < v('hp_min') || ivs.h > v('hp_max') || ivs.a < v('at_min') || ivs.a > v('at_max') ||
-                ivs.d < v('df_min') || ivs.d > v('df_max') || ivs.sa < v('sa_min') || ivs.sa > v('sa_max') ||
-                ivs.sd < v('sd_min') || ivs.sd > v('sd_max') || ivs.s < v('sp_min') || ivs.s > v('sp_max')) {
-                seed = lcg(seed); continue;
-            }
+            for (let adv = 0; adv <= (target + offset); adv++) {
+                if (adv >= (target - offset)) {
+                    let s = seed;
+                    // PID
+                    s = lcg(s); let pL = Number(s >> 16n);
+                    s = lcg(s); let pH = Number(s >> 16n);
+                    let pid = ((pH << 16) >>> 0) | pL;
+                    // IVs
+                    s = lcg(s); let iv1 = Number(s >> 16n);
+                    s = lcg(s); let iv2 = Number(s >> 16n);
+                    let ivs = { h: iv1&31, a: (iv1>>5)&31, d: (iv1>>10)&31, s: iv2&31, sa: (iv2>>5)&31, sd: (iv2>>10)&31 };
+                    
+                    let nIdx = pid % 25;
+                    let isS = (tid ^ sid ^ pH ^ pL) < 8;
 
-            // Renderizado de Output
-            let row = `<tr class="${isS ? 'shiny-row' : ''}">
-                <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${isS ? '✨' : ''}</td>
-                <td>${natures[nIdx]}</td><td>${ivs.h}</td><td>${ivs.a}</td><td>${ivs.d}</td>
-                <td>${ivs.sa}</td><td>${ivs.sd}</td><td>${ivs.s}</td><td>TBD</td>
-            </tr>`;
-            tBody.innerHTML += row;
-            seed = lcg(seed);
-        }
+                    // Aplicar Filtros
+                    let passF = true;
+                    if (document.getElementById('f_shiny').value === 'yes' && !isS) passF = false;
+                    if (document.getElementById('f_nature').value !== 'any' && nIdx != document.getElementById('f_nature').value) passF = false;
+                    if (ivs.h < minV('hp_min') || ivs.h > minV('hp_max') || ivs.a < minV('at_min') || ivs.a > minV('at_max') ||
+                        ivs.d < minV('df_min') || ivs.d > minV('df_max') || ivs.sa < minV('sa_min') || ivs.sa > minV('sa_max') ||
+                        ivs.sd < minV('sd_min') || ivs.sd > minV('sd_max') || ivs.s < minV('sp_min') || ivs.s > minV('sp_max')) passF = false;
+
+                    if (passF) {
+                        let row = `<tr class="${isS ? 'shiny-row' : ''}">
+                            <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${natures[nIdx]}</td>
+                            <td>${ivs.h}</td><td>${ivs.a}</td><td>${ivs.d}</td><td>${ivs.sa}</td><td>${ivs.sd}</td><td>${ivs.s}</td><td>${isS ? '✨' : ''}</td>
+                        </tr>`;
+                        tBody.innerHTML += row;
+                    }
+                }
+                seed = lcg(seed);
+            }
+        });
     }
 </script>
 </body>
