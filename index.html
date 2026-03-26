@@ -65,7 +65,7 @@
         </div>
 
         <h3>Enter Seeds</h3>
-        <textarea id="enter_seeds" placeholder="FFFF"></textarea>
+        <textarea id="enter_seeds" placeholder="FFFF (Empty for Reverse Search)"></textarea>
         
         <button class="btn-main" onclick="buscar()">Search</button>
     </div>
@@ -93,7 +93,7 @@
             <table id="resultsTable">
                 <thead>
                     <tr>
-                        <th>Advances</th><th>PID</th><th>Nature</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
+                        <th>Advances</th><th>PID</th><th>Seed</th><th>Nature</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -109,27 +109,22 @@
     const sNSel = document.getElementById('stats_nature');
     const pSel = document.getElementById('stats_pokemon');
 
-    // Inicializar Naturalezas
     natures.forEach((n, i) => { 
         nSel.add(new Option(n, i)); 
         sNSel.add(new Option(n, i));
     });
 
-    // Función para llenar los Pokémon cuando pokemonDB esté disponible
     function initPokemonList() {
         if (typeof pokemonDB !== 'undefined') {
             pSel.innerHTML = '<option value="">Selecciona...</option>';
             Object.keys(pokemonDB).sort().forEach(name => { 
                 pSel.add(new Option(name, name)); 
             });
-            console.log("Base de datos cargada: " + Object.keys(pokemonDB).length + " Pokémon.");
         } else {
             pSel.innerHTML = '<option value="">Error: pokemonData.js no cargado</option>';
-            console.error("No se encontró pokemonDB. Asegúrate de que pokemonData.js esté en la misma carpeta.");
         }
     }
 
-    // Ejecutar al cargar la ventana
     window.onload = initPokemonList;
 
     function lcg(s) { return (BigInt(s) * 1103515245n + 24691n) & 0xFFFFFFFFn; }
@@ -144,7 +139,6 @@
         const [lvl, ...stats] = raw.map(Number);
         const base = pokemonDB[pName];
         const ids = ['hp', 'at', 'df', 'sa', 'sd', 'sp'];
-        
         const mods = [1,1,1,1,1,1]; 
         const up = Math.floor(natureIdx / 5), down = natureIdx % 5;
         if(up !== down) { mods[up+1] += 0.1; mods[down+1] -= 0.1; }
@@ -155,7 +149,6 @@
                 let calc;
                 if(i===0) calc = Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10;
                 else calc = Math.floor((Math.floor(((base[i]*2 + iv)*lvl)/100) + 5) * mods[i]);
-                
                 if(calc === stats[i]) {
                     if(foundMin === -1) foundMin = iv;
                     foundMax = iv;
@@ -171,7 +164,17 @@
         const tid = parseInt(document.getElementById('tid').value);
         const sid = parseInt(document.getElementById('sid').value);
         const seedsText = document.getElementById('enter_seeds').value.trim();
-        const seedsList = seedsText ? seedsText.split('\n') : ["0"];
+        
+        let seedsList = [];
+        if (seedsText) {
+            seedsList = seedsText.split('\n').map(s => s.trim());
+        } else {
+            // Reverse Search: Generar todas las semillas desde 0000 hasta FFFF
+            for (let i = 0; i <= 0xFFFF; i++) {
+                seedsList.push(i.toString(16).toUpperCase().padStart(4, '0'));
+            }
+        }
+
         const target = parseInt(document.getElementById('target_adv').value);
         const offset = parseInt(document.getElementById('offset_adv').value);
         const tBody = document.querySelector('#resultsTable tbody');
@@ -180,7 +183,8 @@
         const getV = (id) => parseInt(document.getElementById(id).value);
 
         seedsList.forEach(sHex => {
-            let seed = BigInt("0x" + sHex.trim());
+            let initialSeed = BigInt("0x" + sHex);
+            let seed = initialSeed;
             for (let adv = 0; adv <= (target + offset); adv++) {
                 if (adv >= (target - offset)) {
                     let s = seed;
@@ -202,7 +206,7 @@
 
                     if (passF) {
                         tBody.innerHTML += `<tr class="${isS ? 'shiny-row' : ''}">
-                            <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${natures[nIdx]}</td>
+                            <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${sHex}</td><td>${natures[nIdx]}</td>
                             <td>${ivs.h}</td><td>${ivs.a}</td><td>${ivs.d}</td><td>${ivs.sa}</td><td>${ivs.sd}</td><td>${ivs.s}</td><td>${isS ? '✨' : ''}</td>
                         </tr>`;
                     }
