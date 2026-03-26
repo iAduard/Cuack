@@ -95,19 +95,29 @@
                     <div class="field">SpD: <input type="number" id="sd_min" class="iv-input" value="0"> ~ <input type="number" id="sd_max" class="iv-input" value="31"></div>
                     <div class="field">Spe: <input type="number" id="sp_min" class="iv-input" value="0"> ~ <input type="number" id="sp_max" class="iv-input" value="31"></div>
                 </div>
-                <div>
+                <div class="field-group">
                     <div class="field">Nature: <select id="f_nature" style="width: 100px;"><option value="any">Any</option></select></div>
-                    <div class="field">Shiny: <select id="f_shiny" style="width: 100px;"><option value="any">Any</option><option value="yes">Shiny Only</option></select></div>
+                    <div class="field">Shiny: <select id="f_shiny" style="width: 100px;"><option value="any">Any</option><option value="yes">Yes</option></select></div>
+                    <div class="field">Abil: <select id="f_ability" style="width: 100px;"><option value="any">Any</option><option value="0">0</option><option value="1">1</option></select></div>
+                    <div class="field">Gender: <select id="f_gender" style="width: 100px;"><option value="any">Any</option><option value="male">Male</option><option value="female">Female</option></select></div>
+                    <div class="field">HP Type: <select id="f_hp_type" style="width: 100px;">
+                        <option value="any">Any</option>
+                        <option value="Fighting">Fighting</option><option value="Flying">Flying</option><option value="Poison">Poison</option>
+                        <option value="Ground">Ground</option><option value="Rock">Rock</option><option value="Bug">Bug</option>
+                        <option value="Ghost">Ghost</option><option value="Steel">Steel</option><option value="Fire">Fire</option>
+                        <option value="Water">Water</option><option value="Grass">Grass</option><option value="Electric">Electric</option>
+                        <option value="Psychic">Psychic</option><option value="Ice">Ice</option><option value="Dragon">Dragon</option><option value="Dark">Dark</option>
+                    </select></div>
                 </div>
             </div>
 
             <div class="scroll-table">
                 <table id="resultsTable">
                     <thead>
-    <tr>
-        <th>Advances</th><th>PID</th><th>Seed</th><th>Nature</th><th>Abil</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
-    </tr>
-</thead>
+                        <tr>
+                            <th>Advances</th><th>PID</th><th>Seed</th><th>Nature</th><th>Abil</th><th>HP Type</th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th><th>Shiny</th>
+                        </tr>
+                    </thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -137,7 +147,7 @@
             "Event": ["Deoxys", "Lugia", "Ho-Oh"],
             "Stationary": ["Snorlax", "Electrode", "Hypno"],
             "Fossil": ["Omanyte", "Kabuto", "Aerodactyl"],
-            "Wild": ["Abra", "Pikachu", "Gastly", "Ditto", "Ponyta", "Tangela", "Meowth", "Mankey", "Psyduck", "Doduo", "Growlithe", "Vulpix", "Staryu", "Shellder", "Exeggcute", "Rhyhorn", "Chaney", "Kangaskhan", "Tauros", "Pinsir", "Scyther"]
+            "Wild": ["Abra", "Bellsprout", "Caterpie", "Chansey", "Clefairy", "Cubone", "Diglett", "Ditto", "Doduo", "Drowzee", "Ekans", "Exeggcute", "Farfetch'd", "Gastly", "Geodude", "Goldeen", "Grimer", "Growlithe", "Horsea", "Jigpuff", "Kakuna", "Kingler", "Krabby", "Lapras", "Lickitung", "Machop", "Magikarp", "Magnemite", "Mankey", "Meowth", "Metapod", "Nidoran♀", "Nidoran♂", "Oddish", "Paras", "Pidgey", "Pidgeotto", "Pikachu", "Poliwag", "Ponyta", "Psyduck", "Rattata", "Rhyhorn", "Sandshrew", "Scyther", "Seel", "Shellder", "Slowpoke", "Spearow", "Staryu", "Tangela", "Tauros", "Tentacool", "Tentacruel", "Venonat", "Voltorb", "Vulpix", "Weedle", "Zubat"]
         },
         "RSE": {
             "Starters": ["Treecko", "Torchic", "Mudkip"],
@@ -148,7 +158,7 @@
             "Event": ["Mew", "Lugia", "Ho-Oh", "Deoxys"],
             "Stationary": ["Sudowoodo", "Kecleon"],
             "Fossil": ["Lileep", "Anorith"],
-            "Wild": ["Ralts", "Bagon", "Feebas", "Slakoth", "Trapinch", "Aron"]
+            "Wild": ["Abra", "Absol", "Aron", "Azurill", "Baltoy", "Barboach", "Beldum", "Carvanha", "Chimecho", "Clamperl", "Corphish", "Electrike", "Feebas", "Gloom", "Goldeen", "Gulpin", "Heracross", "Illumise", "Kecleon", "Lileep", "Lombre", "Lotad", "Luvdisc", "Machop", "Magikarp", "Makuhita", "Marill", "Meditite", "Minun", "Natu", "Nincada", "Numel", "Oddish", "Pelipper", "Pikachu", "Plusle", "Poochyena", "Ralts", "Relicanth", "Remoraid", "Roselia", "Sableye", "Seadra", "Seedot", "Sharpedo", "Shellder", "Shroomish", "Skarmory", "Slakoth", "Spheal", "Spinda", "Spoink", "Surskit", "Swablu", "Taillow", "Tentacool", "Tentacruel", "Trapinch", "Tropius", "Volbeat", "Wailmer", "Whiscash", "Wingull", "Wurmple", "Zigzagoon", "Zubat"]
         }
     };
 
@@ -183,11 +193,11 @@
         else mSel.value = "1";
 
         gameData[version][category].forEach(name => {
-            if (pokemonDB[name]) pSel.add(new Option(name, name));
+            if (typeof pokemonDB !== 'undefined' && pokemonDB[name]) pSel.add(new Option(name, name));
+            else pSel.add(new Option(name, name)); // Fallback si no hay DB
         });
     }
 
-    // Inicialización de Natures
     const nSel = document.getElementById('f_nature');
     const sNSel = document.getElementById('stats_nature');
     natures.forEach((n, i) => { 
@@ -196,7 +206,7 @@
     });
 
     window.onload = () => {
-        if (typeof pokemonDB !== 'undefined') updateCategories();
+        updateCategories();
     };
 
     function calcularIVs() {
@@ -257,12 +267,15 @@
         const target = parseInt(document.getElementById('target_adv').value);
         const offset = parseInt(document.getElementById('offset_adv').value);
         
-        tBody.innerHTML = "<tr><td colspan='11'>Calculando... (El pato está trabajando)</td></tr>";
+        tBody.innerHTML = "<tr><td colspan='13'>Calculando... (El pato está trabajando)</td></tr>";
         btn.disabled = true;
 
         const filters = {
             shiny: document.getElementById('f_shiny').value,
             nature: document.getElementById('f_nature').value,
+            ability: document.getElementById('f_ability').value,
+            gender: document.getElementById('f_gender').value,
+            hp_type: document.getElementById('f_hp_type').value,
             hp_min: parseInt(document.getElementById('hp_min').value), hp_max: parseInt(document.getElementById('hp_max').value),
             at_min: parseInt(document.getElementById('at_min').value), at_max: parseInt(document.getElementById('at_max').value),
             df_min: parseInt(document.getElementById('df_min').value), df_max: parseInt(document.getElementById('df_max').value),
@@ -277,12 +290,13 @@
 
         worker.onmessage = function(e) {
             const results = e.data;
-            tBody.innerHTML = results.length ? "" : "<tr><td colspan='11'>No se encontraron resultados.</td></tr>";
+            tBody.innerHTML = results.length ? "" : "<tr><td colspan='13'>No se encontraron resultados.</td></tr>";
             results.forEach(r => {
                 tBody.innerHTML += `<tr class="${r.isS ? 'shiny-row' : ''}">
-    <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td><td>${r.ability}</td>
-    <td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td><td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
-</tr>`;
+                    <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td><td>${r.ability}</td>
+                    <td>${r.hpType || '-'}</td><td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td>
+                    <td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
+                </tr>`;
             });
             btn.disabled = false;
         };
