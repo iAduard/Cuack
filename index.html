@@ -8,19 +8,20 @@
         .pato { width: 150px; margin-top: 20px; }
         input { background: #333; color: #fff; border: 1px solid #00ff00; padding: 5px; margin: 5px; }
         button { background: #00ff00; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-        table { margin: 20px auto; border-collapse: collapse; width: 80%; }
-        th, td { border: 1px solid #444; padding: 8px; }
+        table { margin: 20px auto; border-collapse: collapse; width: 90%; }
+        th, td { border: 1px solid #444; padding: 8px; font-size: 0.9em; }
+        th { background: #2a2a2a; }
         .shiny { color: #ffff00; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
     </style>
 </head>
 <body>
     <h1>🦆 CUACK-RNG 🦆</h1>
-    <p>Gen 3 Seed Assistant Web (Alpha)</p>
+    <p>Gen 3 Seed Assistant Web (Alpha) - Motor PokeFinder JS</p>
 
     <div>
-        TID: <input type="number" id="tid" value="0">
-        SID: <input type="number" id="sid" value="0">
-        Seed: <input type="text" id="seed" value="0">
+        TID: <input type="number" id="tid" placeholder="TID" value="0">
+        SID: <input type="number" id="sid" placeholder="SID" value="0">
+        Seed: <input type="text" id="seed" placeholder="Semilla (Hex)" value="0">
         <button onclick="buscar()">BUSCAR SHINIES</button>
     </div>
 
@@ -30,6 +31,7 @@
                 <th>Frame</th>
                 <th>PID</th>
                 <th>Naturaleza</th>
+                <th>IVs (HP/At/De/SpA/SpD/Ve)</th>
                 <th>Shiny?</th>
             </tr>
         </thead>
@@ -46,29 +48,58 @@
         function buscar() {
             const tid = parseInt(document.getElementById('tid').value);
             const sid = parseInt(document.getElementById('sid').value);
-            let seed = BigInt("0x" + document.getElementById('seed').value);
+            let initialSeed = BigInt("0x" + document.getElementById('seed').value);
             const tableBody = document.querySelector('#results tbody');
             tableBody.innerHTML = "";
 
-            for (let frame = 0; frame < 5000; frame++) {
-                seed = lcg(seed);
-                let pidLow = Number(seed >> 16n);
-                seed = lcg(seed);
-                let pidHigh = Number(seed >> 16n);
-                let pid = (pidHigh << 16) | pidLow;
+            let seed = initialSeed;
 
+            // Buscamos 10,000 frames (puedes subirlo a 50,000 si quieres)
+            for (let frame = 0; frame <= 10000; frame++) {
+                let currentSeed = seed;
+
+                // --- MOTOR DE GENERACIÓN MÉTODO 1 (Legendarios/Estáticos) ---
+                
+                // 1. Generar PID
+                currentSeed = lcg(currentSeed);
+                let pidLow = Number(currentSeed >> 16n);
+                currentSeed = lcg(currentSeed);
+                let pidHigh = Number(currentSeed >> 16n);
+                let pid = ((pidHigh << 16) >>> 0) | pidLow;
+
+                // 2. Generar IVs (Siguientes 2 llamadas al LCG)
+                currentSeed = lcg(currentSeed);
+                let iv1 = Number(currentSeed >> 16n);
+                currentSeed = lcg(currentSeed);
+                let iv2 = Number(currentSeed >> 16n);
+
+                let ivs = {
+                    hp: iv1 & 31,
+                    atk: (iv1 >> 5) & 31,
+                    def: (iv1 >> 10) & 31,
+                    spe: iv2 & 31,
+                    spa: (iv2 >> 5) & 31,
+                    spd: (iv2 >> 10) & 31
+                };
+
+                // 3. Verificación Shiny
                 let shinyValue = (tid ^ sid ^ pidHigh ^ pidLow);
                 let isShiny = shinyValue < 8;
 
+                // Filtramos solo para mostrar Shinies por ahora
                 if (isShiny) {
                     let row = `<tr>
                         <td>${frame}</td>
-                        <td>${pid.toString(16).toUpperCase()}</td>
+                        <td class="${isShiny ? 'shiny' : ''}">${(pid >>> 0).toString(16).toUpperCase()}</td>
                         <td>${natures[pid % 25]}</td>
-                        <td class="shiny">¡SÍ! ✨</td>
+                        <td>${ivs.hp}/${ivs.atk}/${ivs.def}/${ivs.spa}/${ivs.spd}/${ivs.spe}</td>
+                        <td class="shiny">✨ SÍ</td>
                     </tr>`;
                     tableBody.innerHTML += row;
                 }
+
+                // Avanzar la semilla base para el siguiente frame
+                seed = lcg(seed);
             }
         }
     </script>
