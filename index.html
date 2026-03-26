@@ -19,6 +19,7 @@
         .btn-calc:hover { background: #718096; }
         .btn-main { background: #edf2f7; color: #1a202c; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 15px; border-radius: 2px; text-transform: uppercase; }
         .btn-main:hover { background: #cbd5e0; }
+        .btn-main:disabled { background: #4a5568; color: #718096; cursor: not-allowed; }
 
         .scroll-table { overflow-y: auto; max-height: 600px; border: 1px solid #4a5568; background: #1a202c; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; }
@@ -67,7 +68,7 @@
         <h3>Enter Seeds</h3>
         <textarea id="enter_seeds" placeholder="FFFF (Empty for Reverse Search)"></textarea>
         
-        <button class="btn-main" onclick="buscar()">Search</button>
+        <button class="btn-main" id="searchBtn" onclick="buscar()">Search</button>
     </div>
 
     <div class="panel">
@@ -127,8 +128,6 @@
 
     window.onload = initPokemonList;
 
-    function lcg(s) { return (BigInt(s) * 1103515245n + 24691n) & 0xFFFFFFFFn; }
-
     function calcularIVs() {
         if (typeof pokemonDB === 'undefined') return alert("Error: Base de datos no disponible.");
         const pName = pSel.value;
@@ -176,15 +175,21 @@
         document.getElementById('f_nature').value = natureIdx;
     }
 
+    // --- SECCIÓN DEL WORKER ---
+    let worker;
+
     function buscar() {
         const tid = parseInt(document.getElementById('tid').value);
         const sid = parseInt(document.getElementById('sid').value);
         const seedsText = document.getElementById('enter_seeds').value.trim();
+        const btn = document.getElementById('searchBtn');
+        const tBody = document.querySelector('#resultsTable tbody');
         
         let seedsList = [];
         if (seedsText) {
             seedsList = seedsText.split('\n').map(s => s.trim());
         } else {
+            // Reverse Search automático (0000 a FFFF)
             for (let i = 0; i <= 0xFFFF; i++) {
                 seedsList.push(i.toString(16).toUpperCase().padStart(4, '0'));
             }
@@ -192,43 +197,56 @@
 
         const target = parseInt(document.getElementById('target_adv').value);
         const offset = parseInt(document.getElementById('offset_adv').value);
-        const tBody = document.querySelector('#resultsTable tbody');
-        tBody.innerHTML = "";
+        
+        // UI Feedback
+        tBody.innerHTML = "<tr><td colspan='11'>Calculando... (El pato está trabajando)</td></tr>";
+        btn.disabled = true;
+        btn.innerText = "Buscando...";
 
-        const getV = (id) => parseInt(document.getElementById(id).value);
+        const filters = {
+            shiny: document.getElementById('f_shiny').value,
+            nature: document.getElementById('f_nature').value,
+            hp_min: parseInt(document.getElementById('hp_min').value), hp_max: parseInt(document.getElementById('hp_max').value),
+            at_min: parseInt(document.getElementById('at_min').value), at_max: parseInt(document.getElementById('at_max').value),
+            df_min: parseInt(document.getElementById('df_min').value), df_max: parseInt(document.getElementById('df_max').value),
+            sa_min: parseInt(document.getElementById('sa_min').value), sa_max: parseInt(document.getElementById('sa_max').value),
+            sd_min: parseInt(document.getElementById('sd_min').value), sd_max: parseInt(document.getElementById('sd_max').value),
+            sp_min: parseInt(document.getElementById('sp_min').value), sp_max: parseInt(document.getElementById('sp_max').value)
+        };
 
-        seedsList.forEach(sHex => {
-            let initialSeed = BigInt("0x" + sHex);
-            let seed = initialSeed;
-            for (let adv = 0; adv <= (target + offset); adv++) {
-                if (adv >= (target - offset)) {
-                    let s = seed;
-                    s = lcg(s); let pL = Number(s >> 16n);
-                    s = lcg(s); let pH = Number(s >> 16n);
-                    let pid = ((pH << 16) >>> 0) | pL;
-                    s = lcg(s); let iv1 = Number(s >> 16n);
-                    s = lcg(s); let iv2 = Number(s >> 16n);
-                    let ivs = { h: iv1&31, a: (iv1>>5)&31, d: (iv1>>10)&31, s: iv2&31, sa: (iv2>>5)&31, sd: (iv2>>10)&31 };
-                    let nIdx = pid % 25;
-                    let isS = (tid ^ sid ^ (pid >>> 16) ^ (pid & 0xFFFF)) < 8;
+        // Crear/Reiniciar Worker
+        if (worker) worker.terminate();
+        worker = new Worker('worker.js');
 
-                    let passF = true;
-                    if (document.getElementById('f_shiny').value === 'yes' && !isS) passF = false;
-                    if (document.getElementById('f_nature').value !== 'any' && nIdx != document.getElementById('f_nature').value) passF = false;
-                    if (ivs.h < getV('hp_min') || ivs.h > getV('hp_max') || ivs.a < getV('at_min') || ivs.a > getV('at_max') ||
-                        ivs.d < getV('df_min') || ivs.d > getV('df_max') || ivs.sa < getV('sa_min') || ivs.sa > getV('sa_max') ||
-                        ivs.sd < getV('sd_min') || ivs.sd > getV('sd_max') || ivs.s < getV('sp_min') || ivs.s > getV('sp_max')) passF = false;
+        // Enviar datos al Worker
+        worker.postMessage({ seedsList, tid, sid, target, offset, filters, natures });
 
-                    if (passF) {
-                        tBody.innerHTML += `<tr class="${isS ? 'shiny-row' : ''}">
-                            <td>${adv}</td><td>${pid.toString(16).toUpperCase()}</td><td>${sHex}</td><td>${natures[nIdx]}</td>
-                            <td>${ivs.h}</td><td>${ivs.a}</td><td>${ivs.d}</td><td>${ivs.sa}</td><td>${ivs.sd}</td><td>${ivs.s}</td><td>${isS ? '✨' : ''}</td>
-                        </tr>`;
-                    }
-                }
-                seed = lcg(seed);
+        // Recibir resultados del Worker
+        worker.onmessage = function(e) {
+            const results = e.data;
+            tBody.innerHTML = "";
+            
+            if(results.length === 0) {
+                tBody.innerHTML = "<tr><td colspan='11'>No se encontraron resultados.</td></tr>";
+            } else {
+                results.forEach(r => {
+                    tBody.innerHTML += `<tr class="${r.isS ? 'shiny-row' : ''}">
+                        <td>${r.adv}</td><td>${r.pid}</td><td>${r.sHex}</td><td>${r.nature}</td>
+                        <td>${r.ivs.h}</td><td>${r.ivs.a}</td><td>${r.ivs.d}</td><td>${r.ivs.sa}</td><td>${r.ivs.sd}</td><td>${r.ivs.s}</td><td>${r.isS ? '✨' : ''}</td>
+                    </tr>`;
+                });
             }
-        });
+            
+            btn.disabled = false;
+            btn.innerText = "Search";
+        };
+
+        worker.onerror = function(err) {
+            console.error("Error en el worker:", err);
+            btn.disabled = false;
+            btn.innerText = "Search";
+            tBody.innerHTML = "<tr><td colspan='11'>Error en el cálculo. Revisa la consola.</td></tr>";
+        };
     }
 </script>
 </body>
