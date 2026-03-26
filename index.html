@@ -37,7 +37,7 @@
             <div class="field">
                 Pokemon: 
                 <select id="stats_pokemon" style="width: 160px;">
-                    <option value="">Selecciona...</option>
+                    <option value="">Cargando datos...</option>
                 </select>
             </div>
             <div class="field">
@@ -107,20 +107,35 @@
     const natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"];
     const nSel = document.getElementById('f_nature');
     const sNSel = document.getElementById('stats_nature');
-    
+    const pSel = document.getElementById('stats_pokemon');
+
+    // Inicializar Naturalezas
     natures.forEach((n, i) => { 
         nSel.add(new Option(n, i)); 
         sNSel.add(new Option(n, i));
     });
 
-    const pSel = document.getElementById('stats_pokemon');
-    if(typeof pokemonDB !== 'undefined'){
-        Object.keys(pokemonDB).sort().forEach(name => { pSel.add(new Option(name, name)); });
+    // Función para llenar los Pokémon cuando pokemonDB esté disponible
+    function initPokemonList() {
+        if (typeof pokemonDB !== 'undefined') {
+            pSel.innerHTML = '<option value="">Selecciona...</option>';
+            Object.keys(pokemonDB).sort().forEach(name => { 
+                pSel.add(new Option(name, name)); 
+            });
+            console.log("Base de datos cargada: " + Object.keys(pokemonDB).length + " Pokémon.");
+        } else {
+            pSel.innerHTML = '<option value="">Error: pokemonData.js no cargado</option>';
+            console.error("No se encontró pokemonDB. Asegúrate de que pokemonData.js esté en la misma carpeta.");
+        }
     }
+
+    // Ejecutar al cargar la ventana
+    window.onload = initPokemonList;
 
     function lcg(s) { return (BigInt(s) * 1103515245n + 24691n) & 0xFFFFFFFFn; }
 
     function calcularIVs() {
+        if (typeof pokemonDB === 'undefined') return alert("Error: Base de datos no disponible.");
         const pName = pSel.value;
         const natureIdx = parseInt(sNSel.value);
         const raw = document.getElementById('enter_stats').value.trim().split(/\s+/);
@@ -135,7 +150,7 @@
         if(up !== down) { mods[up+1] += 0.1; mods[down+1] -= 0.1; }
 
         ids.forEach((id, i) => {
-            let min = 0, max = 31, foundMin = -1, foundMax = -1;
+            let foundMin = -1, foundMax = -1;
             for(let iv=0; iv<=31; iv++) {
                 let calc;
                 if(i===0) calc = Math.floor(((base[0]*2 + iv)*lvl)/100) + lvl + 10;
